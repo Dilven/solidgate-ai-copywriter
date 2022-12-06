@@ -1,4 +1,4 @@
 # solidgate-ai-copywriter
 ```bash
-npm run create:post
+npm run create:posts
 ```
