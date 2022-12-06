@@ -1,0 +1,14 @@
+# name: Clone repository
+
+# on:
+#   schedule:
+#     - cron: '0 0 * * *'
+
+# jobs:
+#   clone:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
+#       - name: Clone repository
+#         run: |
+#           git clone https://github.com/Dilven/solidgate.git .

@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+      "sourceMap": true,
+      "target": "es5",
+      "outDir": ".build",
+      "moduleResolution": "node",
+      "lib": ["esnext"],
+      "rootDir": "./",
+      "esModuleInterop": true,
+      "strict": true,
+      "forceConsistentCasingInFileNames": true,
+      "resolveJsonModule": true,
+      "isolatedModules": true,
+      "downlevelIteration": true,
+      "incremental": true,
+      "skipLibCheck": true,
+      "baseUrl": ".",
+    },
+    "include": ["**/*.ts"]
+  }
+  
