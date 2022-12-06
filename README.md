@@ -1,0 +1,1 @@
+# solidgate-ai-copywriter
