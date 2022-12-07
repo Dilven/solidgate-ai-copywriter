@@ -78,14 +78,14 @@ mutation SchedulePublishPost($id: ID!, $releaseAt: DateTime!) {
     slug
   })
 
-  const releaseAt = new Date();
+  const releaseAt = new Date(2023, 1, 5);
   releaseAt.setDate(releaseAt.getDate() + releaseInDays)
 
   await graphQLClient.request(mutationSchedulePublishPost, { id: post.id, releaseAt: releaseAt.toISOString() })
   return post
 }
 
-const BATCH_SIZE = 3 // max is 10 per 1 minute
+const BATCH_SIZE = 5 // max is 10 per 1 minute
 
 const getBatches = <T>(arr: T[], deletedCount: number) => {
   const res: T[][] = []
@@ -119,11 +119,13 @@ export const delayMS = (t = 1000) => {
       const releaseInDays = (index + 1) * 2
       const post = await createPost(title, content, releaseInDays);
       core.info(`Created post id -${post.id}`)
+      return;
     }))
     core.info(`Wait 1 minute for next batch`)
     const isLastBatch = Number(index) + 1 === batches.length
     if (!isLastBatch) await delayMS(60000)
   }
+  core.info(`Success`)
 })()
 
 
