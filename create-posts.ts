@@ -78,19 +78,44 @@ mutation SchedulePublishPost($id: ID!, $releaseAt: DateTime!) {
   return post
 }
 
+const BATCH_SIZE = 16 // max is 20 per 1 minute
+
+const getBatches = <T>(arr: T[], deletedCount: number) => {
+  const res: T[][] = []
+  while (arr.length) {
+    res.push(arr.splice(0, deletedCount))
+  }
+  return res
+}
+
+export const delayMS = (t = 1000) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(t);
+    }, t);
+  });
+};
+
 
 (async () => {
   const titles: { title: string }[] = await csv().fromFile(
     './post-titles.csv'
   )
-  Promise.all(titles.map(async ({ title }, index) => {
-    core.info(`Creating post - ${title}`)
-    const content = await createContent(title)
-    core.info(`Content created - ${title}`)
-    const releaseInDays = (index + 1) * 2
-    const post = await createPost(title, content, releaseInDays);
-    core.info(`Created post id -${JSON.stringify(post)}`)
-  }))
+
+  const batches = getBatches(titles, BATCH_SIZE)
+
+  for (const batch of batches) {
+    await Promise.all(batch.map(async ({ title }, index) => {
+      core.info(`Creating post - ${title}`)
+      const content = await createContent(title)
+      core.info(`Content created - ${title}`)
+      const releaseInDays = (index + 1) * 2
+      const post = await createPost(title, content, releaseInDays);
+      core.info(`Created post id -${JSON.stringify(post)}`)
+      await delayMS(60000)
+      core.info(`Wait 1 minute for next batch`)
+    }))
+  }
 })()
 
 
