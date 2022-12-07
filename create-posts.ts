@@ -5,6 +5,9 @@ import csv from 'csvtojson'
 import { gql, GraphQLClient } from 'graphql-request'
 import { Configuration, OpenAIApi } from 'openai';
 
+// @ts-ignore
+import Diacritics from 'diacritic';
+
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -23,7 +26,7 @@ const createContent = async (title: string) => {
     max_tokens: 3000
   });
   const content = response.data.choices[0].text
-  if(!content) throw new Error(`could not create content for post - ${title}`);
+  if (!content) throw new Error(`could not create content for post - ${title}`);
   return content
 
 };
@@ -44,8 +47,8 @@ const createPost = async (title: string, content: string, releaseInDays: number)
   })
 
   const mutationCreatePost = gql`
-  mutation CreatePost($title: String!, $content: String!) {
-    createPost(data: { title: $title, content: $content }) {
+  mutation CreatePost($title: String!, $content: String!, $slug: String!) {
+    createPost(data: { title: $title, content: $content, slug: $slug }) {
       title
       content
       id
@@ -61,9 +64,11 @@ mutation SchedulePublishPost($id: ID!, $releaseAt: DateTime!) {
 }
 `
 
-  const { createPost: post } = await graphQLClient.request<{ createPost: { id: string, title: string, content: string}}>(mutationCreatePost, {
+  const slug = Diacritics.clean(title).replace(/\s/g, "-").toLowerCase();
+  const { createPost: post } = await graphQLClient.request<{ createPost: { id: string, title: string, content: string } }>(mutationCreatePost, {
     title,
     content,
+    slug
   })
 
   const releaseAt = new Date();
@@ -78,11 +83,11 @@ mutation SchedulePublishPost($id: ID!, $releaseAt: DateTime!) {
   const titles: { title: string }[] = await csv().fromFile(
     './post-titles.csv'
   )
-  Promise.all(titles.map(async ({ title }, index) => {
+  Promise.all([titles[0]].map(async ({ title }, index) => {
     core.info(`Creating post - ${title}`)
     const content = await createContent(title)
     core.info(`Content created - ${title}`)
-    const releaseInDays = index + 1
+    const releaseInDays = (index + 1) * 2
     const post = await createPost(title, content, releaseInDays);
     core.info(`Created post id -${JSON.stringify(post)}`)
   }))
