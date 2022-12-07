@@ -83,7 +83,7 @@ mutation SchedulePublishPost($id: ID!, $releaseAt: DateTime!) {
   const titles: { title: string }[] = await csv().fromFile(
     './post-titles.csv'
   )
-  Promise.all([titles[0]].map(async ({ title }, index) => {
+  Promise.all(titles.map(async ({ title }, index) => {
     core.info(`Creating post - ${title}`)
     const content = await createContent(title)
     core.info(`Content created - ${title}`)
