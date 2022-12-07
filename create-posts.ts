@@ -112,18 +112,17 @@ export const delayMS = (t = 1000) => {
   const batches = getBatches(titles, BATCH_SIZE)
 
   for (const [index, batch] of Object.entries(batches)) {
-    console.log("🚀 ~ file: create-posts.ts:108 ~ index", typeof index)
     await Promise.all(batch.map(async ({ title }, index) => {
       core.info(`Creating post - ${title}`)
       const content = await createContent(title)
       core.info(`Content created - ${title}`)
       const releaseInDays = (index + 1) * 2
       const post = await createPost(title, content, releaseInDays);
-      core.info(`Created post id -${JSON.stringify(post)}`)
-      core.info(`Wait 1 minute for next batch`)
+      core.info(`Created post id -${post.id}`)
     }))
+    core.info(`Wait 1 minute for next batch`)
     const isLastBatch = Number(index) + 1 === batches.length
-    if(!isLastBatch) await delayMS(60000)
+    if (!isLastBatch) await delayMS(60000)
   }
 })()
 
