@@ -85,7 +85,7 @@ mutation SchedulePublishPost($id: ID!, $releaseAt: DateTime!) {
   return post
 }
 
-const BATCH_SIZE = 5 // max is 10 per 1 minute
+const BATCH_SIZE = 3 // max is 10 per 1 minute
 
 const getBatches = <T>(arr: T[], deletedCount: number) => {
   const res: T[][] = []
