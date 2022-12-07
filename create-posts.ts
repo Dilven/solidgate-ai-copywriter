@@ -64,7 +64,14 @@ mutation SchedulePublishPost($id: ID!, $releaseAt: DateTime!) {
 }
 `
 
-  const slug = Diacritics.clean(title).replace(/\s/g, "-").toLowerCase();
+  const slug = Diacritics.clean(title)
+    .toLowerCase()
+    .replace(/\s+/g, '-')    // Replace spaces with -
+    .replace(/[^-a-zа-я\u0370-\u03ff\u1f00-\u1fff]+/g, '') // Remove all non-word chars
+    .replace(/--+/g, '-')    // Replace multiple - with single -
+    .replace(/^-+/, '')      // Trim - from start of text
+    .replace(/-+$/, '')      // Trim - from end of text;
+
   const { createPost: post } = await graphQLClient.request<{ createPost: { id: string, title: string, content: string } }>(mutationCreatePost, {
     title,
     content,
@@ -78,7 +85,7 @@ mutation SchedulePublishPost($id: ID!, $releaseAt: DateTime!) {
   return post
 }
 
-const BATCH_SIZE = 16 // max is 20 per 1 minute
+const BATCH_SIZE = 5 // max is 10 per 1 minute
 
 const getBatches = <T>(arr: T[], deletedCount: number) => {
   const res: T[][] = []
@@ -104,7 +111,8 @@ export const delayMS = (t = 1000) => {
 
   const batches = getBatches(titles, BATCH_SIZE)
 
-  for (const batch of batches) {
+  for (const [index, batch] of Object.entries(batches)) {
+    console.log("🚀 ~ file: create-posts.ts:108 ~ index", typeof index)
     await Promise.all(batch.map(async ({ title }, index) => {
       core.info(`Creating post - ${title}`)
       const content = await createContent(title)
@@ -112,9 +120,10 @@ export const delayMS = (t = 1000) => {
       const releaseInDays = (index + 1) * 2
       const post = await createPost(title, content, releaseInDays);
       core.info(`Created post id -${JSON.stringify(post)}`)
-      await delayMS(60000)
       core.info(`Wait 1 minute for next batch`)
     }))
+    const isLastBatch = Number(index) + 1 === batches.length
+    if(!isLastBatch) await delayMS(60000)
   }
 })()
 
